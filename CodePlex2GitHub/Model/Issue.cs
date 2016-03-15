@@ -12,7 +12,7 @@ namespace CodePlex2GitHub.Model
     {
         public int Number { get; set; }
         public string Title { get; set; }
-        public string Text { get; set; }
+        public string Body { get; set; }
         public Person ReportedBy { get; set; }
         public DateTime ReportedOn { get; set; }
         public Person UpdatedBy { get; set; }

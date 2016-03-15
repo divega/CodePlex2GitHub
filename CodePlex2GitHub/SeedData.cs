@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace CodePlex2GitHub
             DiscussionTopics.Add(context);
             IssueClosingReasons.Add(context);
             People.Add(context);
+            // TODO: make this async
             context.SaveChanges();
         }
 
@@ -46,6 +48,7 @@ namespace CodePlex2GitHub
             public static Component Tests => new Component { Id = 9, Description = "Tests" };
         }
 
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         public static class Releases
         {
             public static void Add(CodePlexDbContext context)

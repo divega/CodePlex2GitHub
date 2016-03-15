@@ -117,7 +117,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncPump.cs" />
     <Compile Include="CodePlexDbContext.cs" />
+    <Compile Include="FakeData.cs" />
+    <Compile Include="GitHub.cs" />
     <Compile Include="Model\IssueAttachment.cs" />
     <Compile Include="Model\DiscussionComment.cs" />
     <Compile Include="Model\DiscussionTopic.cs" />

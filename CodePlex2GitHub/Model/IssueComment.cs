@@ -10,7 +10,7 @@ namespace CodePlex2GitHub.Model
     public class IssueComment
     {
         public int Id { get; set; }
-        public string Text { get; set; }
+        public string Body { get; set; }
         public DateTime PostedOn { get; set; }
         public Person PosteByPerson { get; set; }
     }
