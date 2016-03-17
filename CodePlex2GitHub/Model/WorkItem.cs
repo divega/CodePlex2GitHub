@@ -8,7 +8,7 @@ using Octokit;
 
 namespace CodePlex2GitHub.Model
 {
-    public class Issue
+    public class WorkItem
     {
         public int Number { get; set; }
         public string Title { get; set; }
@@ -21,15 +21,15 @@ namespace CodePlex2GitHub.Model
         public Person ClosedBy { get; set; }
         public DateTime ClosedOn { get; set; }
         public int Votes { get; set; } = 1;
-        public IssueStatus Status { get; set; }
-        public IssueClosingReason ClosingReason { get; set; }
-        public IssueImpact? Impact { get; set; }
-        public IssueType? Type { get; set; }
+        public WorkItemStatus Status { get; set; }
+        public WorkItemClosingReason ClosingReason { get; set; }
+        public WorkItemImpact? Impact { get; set; }
+        public WorkItemType? Type { get; set; }
         public Release Release { get; set; }
         public Component Component { get; set; }
-        public ICollection<IssueAttachment> Attachments { get; set; }
-        public ICollection<IssueComment> Comments { get; set; }
-        public enum IssueStatus
+        public ICollection<WorkItemAttachment> Attachments { get; set; }
+        public ICollection<WorkItemComment> Comments { get; set; }
+        public enum WorkItemStatus
         {
             Proposed,
             Active,
@@ -37,14 +37,14 @@ namespace CodePlex2GitHub.Model
             Closed
         }
 
-        public enum IssueImpact
+        public enum WorkItemImpact
         {
             Low,
             Medium,
             High
         }
 
-        public enum IssueType
+        public enum WorkItemType
         {
             Task,
             Issue,

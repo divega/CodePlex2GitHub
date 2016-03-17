@@ -15,7 +15,7 @@ namespace CodePlex2GitHub
             Components.Add(context);
             Releases.Add(context);
             DiscussionTopics.Add(context);
-            IssueClosingReasons.Add(context);
+            WorkItemClosingReasons.Add(context);
             People.Add(context);
             // TODO: make this async
             context.SaveChanges();
@@ -66,17 +66,87 @@ namespace CodePlex2GitHub
                     Future,
                     Investigation);
             }
-            public static Release EF500 => new Release { Id = 1, Description = "EF 5.0.0", IsReleased = true, };
-            public static Release EF600 => new Release { Id = 2, Description = "EF 6.0.0", IsReleased = true, };
-            public static Release EF601 => new Release { Id = 3, Description = "EF 6.0.1", IsReleased = true, };
-            public static Release EF602 => new Release { Id = 4, Description = "EF 6.0.2", IsReleased = true, };
-            public static Release EF610 => new Release { Id = 5, Description = "EF 6.1.0", IsReleased = true, };
-            public static Release EF611 => new Release { Id = 6, Description = "EF 6.1.1", IsReleased = true, };
-            public static Release EF612 => new Release { Id = 7, Description = "EF 6.1.2", IsReleased = true, };
-            public static Release EF613 => new Release { Id = 8, Description = "EF 6.1.3", IsReleased = true, };
-            public static Release EF620 => new Release { Id = 9, Description = "EF 6.2.0" };
-            public static Release Future => new Release { Id = 1000, Description = "Future" };
-            public static Release Investigation => new Release { Id = 1001, Description = "Investigation" };
+            public static Release EF500 => new Release
+            {
+                Id = 1, Name = "EF 5.0.0", GitHubName = "EF 5.0.0", IsReleased = true, ReleaseDate = new DateTime(2012, 8, 11), Body =
+                    @"The final release of Entity Framework 5 (EF5) is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release."
+            };
+            public static Release EF600 => new Release
+            {
+                Id = 2, Name = "EF 6.0.0", GitHubName = "EF 6.0.0", IsReleased = true, ReleaseDate = new DateTime(2013, 10, 17), Body =
+                    @"The final release of Entity Framework 6 (EF6) is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release."
+            };
+            public static Release EF601 => new Release
+            {
+                Id = 3, Name = "EF 6.0.1", GitHubName = "EF 6.0.1", IsReleased = true, ReleaseDate = new DateTime(2013, 10, 17), Body =
+                    @"The final release of the EF 6.0.1 patch is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release."
+            };
+            public static Release EF602 => new Release
+            {
+                Id = 4, Name = "EF 6.0.2", GitHubName = "EF 6.0.2", IsReleased = true, ReleaseDate = new DateTime(2013, 12, 13), Body =
+                    @"The final release of the EF 6.0.2 patch is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release."
+            };
+            public static Release EF610 => new Release
+            {
+                Id = 5, Name = "EF 6.1.0", GitHubName = "EF 6.1.0", IsReleased = true, ReleaseDate = new DateTime(2014, 2, 11), Body=
+                    @"The final release of the EF 6.1.0 release is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* 
+
+See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release.
+
+For details on how to get the latest runtime and tooling, see the [url:Get It page|http://msdn.microsoft.com/en-us/data/ee712906]."
+            };
+            public static Release EF611 => new Release
+            {
+                Id = 6, Name = "EF 6.1.1", GitHubName = "EF 6.1.1", IsReleased = true, ReleaseDate = new DateTime(2014, 6, 20), Body=
+                    @"The final release of the EF 6.1.1 release is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* 
+
+See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release.
+
+For details on how to get the latest runtime and tooling, see the [url:Get It page|http://msdn.microsoft.com/en-us/data/ee712906]."
+            };
+            public static Release EF612 => new Release
+            {
+                Id = 7, Name = "EF 6.1.2", GitHubName = "EF 6.1.2", IsReleased = true, ReleaseDate = new DateTime(2014, 12, 22), Body =
+                    @"The final release of the EF 6.1.2 release is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* 
+
+See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release.
+
+For details on how to get the latest runtime and tooling, see the [url:Get It page|http://msdn.microsoft.com/en-us/data/ee712906]."
+            };
+            public static Release EF613 => new Release { Id = 8, Name = "EF 6.1.3", GitHubName = "EF 6.1.3", IsReleased = true, ReleaseDate = new DateTime(2015, 3, 10), Body =
+@"The final release of the EF 6.1.3 release is now available. 
+
+*Visit [url:http://msdn.com/data/ef] to get started with this release.* 
+
+See the [url:Entity Framework Version History|http://msdn.com/data/jj574253] for a list of new features in this release.
+
+For details on how to get the latest runtime and tooling, see the [url:Get It page|http://msdn.microsoft.com/en-us/data/ee712906]."
+            };
+            public static Release EF620 => new Release { Id = 9, Name = "EF 6.2.0", GitHubName = "EF 6.2.0" };
+            public static Release Future => new Release
+            {
+                Id = 1000, Name = "Future", GitHubName = "Backlog", Body =
+                    @"This release is used to track work items that have been approved but are not scheduled for the current release."
+            };
+            public static Release Investigation => new Release
+            {
+                Id = 1001, Name = "Investigation", GitHubName = "Backlog", IsInvestigation = true, Body =
+                    @"This release is used to track work items that need to be investigated to determine if they are legitimate issues and whether they should be fixed in the current release."
+            };
         }
 
         public static class DiscussionTopics
@@ -97,7 +167,7 @@ namespace CodePlex2GitHub
 
         }
 
-        public static class IssueClosingReasons
+        public static class WorkItemClosingReasons
         {
             public static void Add(CodePlexDbContext context)
             {
@@ -109,12 +179,12 @@ namespace CodePlex2GitHub
                     ExternalIssue,
                     WontFix);
             }
-            public static IssueClosingReason Fixed => new IssueClosingReason { Id = 1, Description = "Fixed" };
-            public static IssueClosingReason ByDesign => new IssueClosingReason { Id = 2, Description = "By Design" };
-            public static IssueClosingReason CouldNotRepro => new IssueClosingReason { Id = 3, Description = "Could Not Repro" };
-            public static IssueClosingReason Duplicate => new IssueClosingReason { Id = 4, Description = "Duplicate" };
-            public static IssueClosingReason ExternalIssue => new IssueClosingReason { Id = 5, Description = "External Issue" };
-            public static IssueClosingReason WontFix => new IssueClosingReason { Id = 6, Description = "Won't Fix" };
+            public static WorkItemClosingReason Fixed => new WorkItemClosingReason { Id = 1, Description = "Fixed" };
+            public static WorkItemClosingReason ByDesign => new WorkItemClosingReason { Id = 2, Description = "By Design" };
+            public static WorkItemClosingReason CouldNotRepro => new WorkItemClosingReason { Id = 3, Description = "Could Not Repro" };
+            public static WorkItemClosingReason Duplicate => new WorkItemClosingReason { Id = 4, Description = "Duplicate" };
+            public static WorkItemClosingReason ExternalIssue => new WorkItemClosingReason { Id = 5, Description = "External Issue" };
+            public static WorkItemClosingReason WontFix => new WorkItemClosingReason { Id = 6, Description = "Won't Fix" };
         }
 
         public static class People
@@ -135,7 +205,7 @@ namespace CodePlex2GitHub
                     Maurycy,
                     Murat,
                     Rowan,
-                    Smit, 
+                    Smit,
                     Pawel);
             }
             public static Person Arthur
@@ -181,10 +251,10 @@ namespace CodePlex2GitHub
                 => new Person { Alias = "smitpatel", GitHubAlias = "smitpatel", IsTeamMember = true };
 
             public static Person Pawel
-                => new Person {Alias = "moozzyk", GitHubAlias = "moozzyk", IsTeamMember = true};
+                => new Person { Alias = "moozzyk", GitHubAlias = "moozzyk", IsTeamMember = true };
 
             public static Person Luke
-                => new Person {Alias = "lukew", GitHubAlias = "lukewaters", IsTeamMember = true};
+                => new Person { Alias = "lukew", GitHubAlias = "lukewaters", IsTeamMember = true };
 
         }
     }

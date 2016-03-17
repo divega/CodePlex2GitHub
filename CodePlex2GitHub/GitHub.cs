@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CodePlex2GitHub.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Octokit;
@@ -27,24 +28,23 @@ namespace CodePlex2GitHub
         }
 
 
-        private Task<Octokit.Issue> CreateIssue()
+        private Task<Issue> CreateEmptyIssue()
         {
-            return _client.Issue.Create(_repoOwner, _repoName, new NewIssue("Unused"));
+            return _client.Issue.Create(_repoOwner, _repoName, new NewIssue("New Issue"));
         }
-        private async Task<Octokit.IssueUpdate> GetOrAddIssue(int number)
+        private async Task<IssueUpdate> GetOrAddIssue(int number)
         {
             var existingIssue = await _client.Issue.Get(_repoOwner, _repoName, number);
             if (existingIssue != null)
             {
                 return existingIssue.ToUpdate();
             }
-            var newIssue = await CreateIssue();
+            var newIssue = await CreateEmptyIssue();
             var issueUpdate = newIssue.ToUpdate();
             while (newIssue.Number < number)
             {
-                issueUpdate.State = ItemState.Closed;
-                await UpdateIssue(newIssue.Number, issueUpdate);
-                newIssue = await CreateIssue();
+                await DeleteIssue(newIssue.Number, issueUpdate);
+                newIssue = await CreateEmptyIssue();
                 issueUpdate = newIssue.ToUpdate();
             }
 
@@ -55,29 +55,52 @@ namespace CodePlex2GitHub
             return issueUpdate;
         }
 
+        private async Task DeleteIssue(int number, IssueUpdate issueUpdate)
+        {
+            issueUpdate.Title = "This issue has been removed or does not exist";
+            issueUpdate.State = ItemState.Closed;
+            issueUpdate.Assignee = null;
+            issueUpdate.Body = null;
+            issueUpdate.ClearLabels();
+            issueUpdate.Milestone = null;
+            await UpdateIssue(number, issueUpdate);
+            await RemoveIssueComments(number);
+
+        }
+
+        private async Task RemoveIssueComments(int number)
+        {
+            foreach (var comment in await _client.Issue.Comment.GetAllForIssue(_repoOwner, _repoName, number))
+            {
+                await _client.Issue.Comment.Delete(_repoOwner, _repoName, comment.Id);
+            }
+        }
+
         private Task UpdateIssue(int number, IssueUpdate issueUpdate)
         {
             return _client.Issue.Update(_repoOwner, _repoName, number, issueUpdate);
         }
 
-        public async Task CreateIssuesAsync()
+        public async Task MigrateAllIssuesAsync()
         {
-            // TODO: ForEachAsync has issue
+            // TODO: ForEachAsync (and FWIW MyForEachAsync) has issues when debugging
             foreach (var codePlexIssue in _context.Issues.OrderBy(i => i.Number))
             {
-                await CreateIssueAsync(codePlexIssue);
+                await MigrateIssueAsync(codePlexIssue);
             }
         }
 
-        public async Task CreateIssueAsync(Model.Issue codePlexIssue)
+        public async Task MigrateIssueAsync(WorkItem codePlexWorkItem)
         {
             try
             {
-                var update = await GetOrAddIssue(codePlexIssue.Number);
-                update.Title = codePlexIssue.Title;
-                update.Body = codePlexIssue.Body;
-                update.Assignee = codePlexIssue.AssignedTo?.GitHubAlias;
-                await UpdateIssue(codePlexIssue.Number, update);
+                var update = await GetOrAddIssue(codePlexWorkItem.Number);
+                update.Title = codePlexWorkItem.Title;
+                update.Body = codePlexWorkItem.Body;
+                update.Assignee = codePlexWorkItem.AssignedTo?.GitHubAlias;
+                // TODO: fill in details and comments
+                //update.Milestone = codePlexWorkItem.Release?.Name;
+                await UpdateIssue(codePlexWorkItem.Number, update);
             }
             catch (Exception e)
             {
@@ -86,21 +109,44 @@ namespace CodePlex2GitHub
             }
 
         }
-    }
 
-    public static class QueryExtensions
-    {
-        public async static Task MyForEachAsync<T>(this IQueryable<T> source, Action<T> action)
+        public async Task MigrateReleases()
         {
-            var enumerable = source.ToAsyncEnumerable();
-            using (var enumerator = enumerable.GetEnumerator())
+            var codePlexReleases = await _context.Releases.Where(p => !p.IsInvestigation).OrderBy(p => p.GitHubName).ToListAsync();
+            var gitHubMilestones = await _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName);
+            foreach (var codePlexRelease in codePlexReleases)
             {
-                while (await enumerator.MoveNext())
+                var gitHubMilestone = gitHubMilestones.SingleOrDefault(m => m.Title == codePlexRelease.GitHubName) ??
+                                      await _client.Issue.Milestone.Create(_repoOwner, _repoName,
+                                            new NewMilestone(codePlexRelease.GitHubName));
+
+                var milestoneUpdate = new MilestoneUpdate
                 {
-                    action(enumerator.Current);
-                }
+                    Title = gitHubMilestone.Title,
+                    Description = codePlexRelease.Body,
+                    State = codePlexRelease.IsReleased?ItemState.Closed : ItemState.Open,
+                    DueOn = codePlexRelease.ReleaseDate,
+                };
+
+                await _client.Issue.Milestone.Update(_repoOwner, _repoName, gitHubMilestone.Number, milestoneUpdate);
+
             }
         }
     }
+
+    //public static class QueryExtensions
+    //{
+    //    public async static Task MyForEachAsync<T>(this IQueryable<T> source, Action<T> action)
+    //    {
+    //        var enumerable = source.ToAsyncEnumerable();
+    //        using (var enumerator = enumerable.GetEnumerator())
+    //        {
+    //            while (await enumerator.MoveNext())
+    //            {
+    //                action(enumerator.Current);
+    //            }
+    //        }
+    //    }
+    //}
 }
 

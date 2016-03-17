@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CodePlex2GitHub.Model;
 using Octokit;
-using Issue = CodePlex2GitHub.Model.Issue;
-using IssueComment = CodePlex2GitHub.Model.IssueComment;
 
 namespace CodePlex2GitHub
 {
@@ -23,34 +22,34 @@ namespace CodePlex2GitHub
             public static void Add(CodePlexDbContext context)
             {
                 context.AddRange(
-                    new Issue
+                    new WorkItem
                     {
                         Number = 2,
 
                         Title = "Investigate FxCop warning on disposable classes",
-                        Body = 
-@"Currently there are quite a few cases where FxCop warnings have been suppressed for disposable classes. These suppressions may be okay, or the FxCop warnings may indicate real issues. Each one should be investigated.
+                        Body =
+@"Hey @ajcvickers Currently there are quite a few cases where FxCop warnings have been suppressed for disposable classes. These suppressions may be okay, or the FxCop warnings may indicate real issues. Each one should be investigated.
 
 Suppressions include CA1001, CA2213, CA1063.",
                         Component = SeedData.Components.Runtime,
-                        ClosingReason = SeedData.IssueClosingReasons.Fixed,
+                        ClosingReason = SeedData.WorkItemClosingReasons.Fixed,
                         ReportedBy = SeedData.People.Arthur,
                         ReportedOn = new DateTime(2012, 4, 11),
                         UpdatedBy = SeedData.People.Murat,
                         UpatedOn = new DateTime(2014, 4, 25),
                         Release = SeedData.Releases.EF610,
-                        Impact = Issue.IssueImpact.Medium,
-                        Status = Issue.IssueStatus.Closed,
-                        Type = Issue.IssueType.Task,
-                        Comments = new List<IssueComment>
+                        Impact = WorkItem.WorkItemImpact.Medium,
+                        Status = WorkItem.WorkItemStatus.Closed,
+                        Type = WorkItem.WorkItemType.Task,
+                        Comments = new List<WorkItemComment>
                         {
-                                        new IssueComment
+                                        new WorkItemComment
                                         {
                                             PosteByPerson = SeedData.People.Brice,
                                             PostedOn = new DateTime(2014,1,20),
                                             Body = @"Fixed in changeset c720d567035de480fc3fe592d91052fd30934313"
                                         },
-                                        new IssueComment
+                                        new WorkItemComment
                                         {
                                             PosteByPerson = SeedData.People.Brice,
                                             PostedOn = new DateTime(2014,1,20),
@@ -58,7 +57,7 @@ Suppressions include CA1001, CA2213, CA1063.",
                                         }
                         }
                     },
-                    new Issue
+                    new WorkItem
                     {
                         Number = 3,
 
@@ -68,21 +67,21 @@ Suppressions include CA1001, CA2213, CA1063.",
 http://stackoverflow.com/questions/10117008/net-4-5-beta-dbgeography-notimplementedexception
 Also the exception probably should not be NotImplementedException",
                         Component = SeedData.Components.Runtime,
-                        Status = Issue.IssueStatus.Closed,
-                        ClosingReason = SeedData.IssueClosingReasons.Fixed,
+                        Status = WorkItem.WorkItemStatus.Closed,
+                        ClosingReason = SeedData.WorkItemClosingReasons.Fixed,
                         ReportedBy = SeedData.People.Pawel,
                         ReportedOn = new DateTime(2012, 4, 12),
                         UpdatedBy = SeedData.People.Eilon,
                         UpatedOn = new DateTime(2015, 7, 27),
                         Release = SeedData.Releases.EF600,
-                        Impact = Issue.IssueImpact.Medium,
-                        Type = Issue.IssueType.Issue,
+                        Impact = WorkItem.WorkItemImpact.Medium,
+                        Type = WorkItem.WorkItemType.Issue,
                         ClosedBy = SeedData.People.Luke,
                         ClosedOn = new DateTime(2013, 4, 12),
-                        AssignedTo = SeedData.People.Diego,
-                        Comments = new List<IssueComment>
+                        AssignedTo = SeedData.People.Arthur,
+                        Comments = new List<WorkItemComment>
                         {
-                                        new IssueComment
+                                        new WorkItemComment
                                         {
                                             PosteByPerson = SeedData.People.Arthur,
                                             PostedOn = new DateTime(2013,3,20),

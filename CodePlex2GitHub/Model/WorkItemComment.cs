@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class IssueComment
+    public class WorkItemComment
     {
         public int Id { get; set; }
         public string Body { get; set; }

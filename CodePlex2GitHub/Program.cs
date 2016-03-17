@@ -35,7 +35,8 @@ namespace CodePlex2GitHub
                 FakeData.Add(context);
 
                 var gitHub = new GitHub(args[0], args[1], args[2], context);
-                await gitHub.CreateIssuesAsync();
+                //await gitHub.MigrateAllIssuesAsync();
+                await gitHub.MigrateReleases();
             }
         }
 

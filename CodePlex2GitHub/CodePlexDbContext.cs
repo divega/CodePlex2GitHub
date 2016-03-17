@@ -16,8 +16,8 @@ namespace CodePlex2GitHub
         public DbSet<Release> Releases { get; set; }
 
 
-        public DbSet<Issue> Issues { get; set; }
-        public DbSet<IssueClosingReason> IssueClosingReasons { get; set; }
+        public DbSet<WorkItem> Issues { get; set; }
+        public DbSet<WorkItemClosingReason> IssueClosingReasons { get; set; }
 
 
         public DbSet<Discussion> Discussions { get; set; }
@@ -33,7 +33,7 @@ namespace CodePlex2GitHub
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder
-                .Entity<Issue>(
+                .Entity<WorkItem>(
                     config =>
                     {
                         config.HasKey(issue => issue.Number);

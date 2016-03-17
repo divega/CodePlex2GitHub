@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class IssueClosingReason
+    public class WorkItemClosingReason
     {
         public int Id { get; set; }
         public string Description { get; set; }

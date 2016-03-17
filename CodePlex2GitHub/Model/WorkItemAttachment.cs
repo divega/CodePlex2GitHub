@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class IssueAttachment
+    public class WorkItemAttachment
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public byte[] Content { get; set; }
-        public Issue Issue { get; set; }
+        public WorkItem WorkItem { get; set; }
     }
 }

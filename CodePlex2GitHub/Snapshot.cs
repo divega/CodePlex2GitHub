@@ -20,7 +20,7 @@ namespace CodePlex2GitHub
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Name");
 
                     b.HasKey("Id");
 
@@ -48,14 +48,14 @@ namespace CodePlex2GitHub
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Name");
 
                     b.HasKey("Id");
 
                     b.ToTable("DiscussionTopic");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.Issue", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItem", b =>
                 {
                     b.Property<int>("Number")
                         .ValueGeneratedOnAdd();
@@ -108,10 +108,10 @@ namespace CodePlex2GitHub
 
                     b.HasIndex("UpdatedByAlias");
 
-                    b.ToTable("Issue");
+                    b.ToTable("WorkItem");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.IssueAttachment", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemAttachment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -126,22 +126,22 @@ namespace CodePlex2GitHub
 
                     b.HasIndex("IssueNumber");
 
-                    b.ToTable("IssueAttachment");
+                    b.ToTable("WorkItemAttachment");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.IssueClosingReason", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemClosingReason", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Name");
 
                     b.HasKey("Id");
 
-                    b.ToTable("IssueClosingReason");
+                    b.ToTable("WorkItemClosingReason");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.IssueComment", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemComment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -160,18 +160,18 @@ namespace CodePlex2GitHub
 
                     b.HasIndex("PosteByPersonAlias");
 
-                    b.ToTable("IssueComment");
+                    b.ToTable("WorkItemComment");
                 });
 
             modelBuilder.Entity("CodePlex2GitHub.Model.Person", b =>
                 {
-                    b.Property<string>("Alias");
+                    b.Property<string>("Name");
 
-                    b.Property<string>("GitHubAlias");
+                    b.Property<string>("GitHubName");
 
                     b.Property<bool>("IsTeamMember");
 
-                    b.HasKey("Alias");
+                    b.HasKey("Name");
 
                     b.ToTable("Person");
                 });
@@ -181,7 +181,7 @@ namespace CodePlex2GitHub
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Name");
 
                     b.Property<bool>("IsReleased");
 
@@ -197,7 +197,7 @@ namespace CodePlex2GitHub
                         .HasForeignKey("TopicId");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.Issue", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItem", b =>
                 {
                     b.HasOne("CodePlex2GitHub.Model.Person")
                         .WithMany()
@@ -207,7 +207,7 @@ namespace CodePlex2GitHub
                         .WithMany()
                         .HasForeignKey("ClosedByAlias");
 
-                    b.HasOne("CodePlex2GitHub.Model.IssueClosingReason")
+                    b.HasOne("CodePlex2GitHub.Model.WorkItemClosingReason")
                         .WithMany()
                         .HasForeignKey("ClosingReasonId");
 
@@ -228,16 +228,16 @@ namespace CodePlex2GitHub
                         .HasForeignKey("UpdatedByAlias");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.IssueAttachment", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemAttachment", b =>
                 {
-                    b.HasOne("CodePlex2GitHub.Model.Issue")
+                    b.HasOne("CodePlex2GitHub.Model.WorkItem")
                         .WithMany()
                         .HasForeignKey("IssueNumber");
                 });
 
-            modelBuilder.Entity("CodePlex2GitHub.Model.IssueComment", b =>
+            modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemComment", b =>
                 {
-                    b.HasOne("CodePlex2GitHub.Model.Issue")
+                    b.HasOne("CodePlex2GitHub.Model.WorkItem")
                         .WithMany()
                         .HasForeignKey("IssueNumber");
 
