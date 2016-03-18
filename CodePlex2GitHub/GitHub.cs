@@ -7,6 +7,7 @@ using CodePlex2GitHub.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Octokit;
+using Remotion.Linq.Clauses;
 
 namespace CodePlex2GitHub
 {
@@ -95,6 +96,7 @@ namespace CodePlex2GitHub
 
         public async Task MigrateIssueComments(WorkItem codePlexWorkItem)
         {
+            await DeleteIssueCommentsAsync(codePlexWorkItem.Number); 
             foreach (var comment in codePlexWorkItem.Comments.OrderBy(c => c.PostedOn))
             {
                 await _client.Issue.Comment.Create(_repoOwner, _repoName, codePlexWorkItem.Number, comment.Body);
@@ -117,7 +119,6 @@ namespace CodePlex2GitHub
                     update.Milestone = MilestoneMap[codePlexWorkItem.Release.GitHubName].Number;
                 }
                 await UpdateIssueAsync(codePlexWorkItem.Number, update);
-                await DeleteIssueCommentsAsync(codePlexWorkItem.Number); // todo: move into next method
                 await MigrateIssueComments(codePlexWorkItem);
                 await MigrateIssueLabels(codePlexWorkItem);
             }
@@ -143,39 +144,25 @@ namespace CodePlex2GitHub
                 .AddIf(codePlexWorkItem.Title.Contains("[UX]"), "designer")
                 .AddIf(codePlexWorkItem.Title.Contains("[Migration]"), "migrations")
                 .AddIf(codePlexWorkItem.Title.Contains("regression"), "regression")
-                .AddIf(codePlexWorkItem.Status == WorkItem.WorkItemStatus.Active, "working");
+                .AddIf(codePlexWorkItem.Status == WorkItem.WorkItemStatus.Active, "working")
+                .AddIf(codePlexWorkItem.Votes >= 200, "200+votes")
+                .AddIf(codePlexWorkItem.Votes < 200 && codePlexWorkItem.Votes >= 100, "100+votes")
+                .AddIf(codePlexWorkItem.Votes < 100 && codePlexWorkItem.Votes >= 50, "50+votes")
+                .AddIf(codePlexWorkItem.Votes < 50 && codePlexWorkItem.Votes >= 20, "20+votes")
+                .AddIf(codePlexWorkItem.Votes < 20 && codePlexWorkItem.Votes >= 10, "10+votes");
 
             issueLabels.Add(codePlexWorkItem.Component?.GitHubName);
             issueLabels.Add(codePlexWorkItem.ClosingReason?.GitHubName);
             issueLabels.Remove(null);
 
-            var totalVotes = codePlexWorkItem.Votes;
-
-            totalVotes = AddVoteLabel(issueLabels, totalVotes, 200);
-            totalVotes = AddVoteLabel(issueLabels, totalVotes, 100);
-            totalVotes = AddVoteLabel(issueLabels, totalVotes, 50);
-            totalVotes = AddVoteLabel(issueLabels, totalVotes, 20);
-            totalVotes = AddVoteLabel(issueLabels, totalVotes, 10);
-
             await _client.Issue.Labels.ReplaceAllForIssue(_repoOwner, _repoName, codePlexWorkItem.Number, issueLabels.ToArray());
-
         }
 
-        private static int AddVoteLabel(HashSet<string> issueLabels, int totalVotes, int voteStep)
-        {
-            if (totalVotes > voteStep)
-            {
-                issueLabels.Add($"{voteStep}+votes");
-                totalVotes -= voteStep;
-            }
-
-            return totalVotes;
-        }
 
         public async Task MigrateReleasesAsync()
         {
             var codePlexReleases = await _context.Releases.Where(p => !p.IsInvestigation).OrderBy(p => p.GitHubName).ToListAsync();
-            var gitHubMilestones = await _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName,new MilestoneRequest {State = ItemState.All});
+            var gitHubMilestones = await _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName, new MilestoneRequest { State = ItemState.All });
             foreach (var codePlexRelease in codePlexReleases)
             {
                 var gitHubMilestone = gitHubMilestones.SingleOrDefault(m => m.Title == codePlexRelease.GitHubName) ??
