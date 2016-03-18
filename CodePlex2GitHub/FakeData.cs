@@ -41,17 +41,18 @@ Suppressions include CA1001, CA2213, CA1063.",
                         Impact = WorkItem.WorkItemImpact.Medium,
                         Status = WorkItem.WorkItemStatus.Closed,
                         Type = WorkItem.WorkItemType.Task,
+                        Votes = 500,
                         Comments = new List<WorkItemComment>
                         {
                                         new WorkItemComment
                                         {
-                                            PosteByPerson = SeedData.People.Brice,
+                                            PosteBy = SeedData.People.Brice,
                                             PostedOn = new DateTime(2014,1,20),
                                             Body = @"Fixed in changeset c720d567035de480fc3fe592d91052fd30934313"
                                         },
                                         new WorkItemComment
                                         {
-                                            PosteByPerson = SeedData.People.Brice,
+                                            PosteBy = SeedData.People.Brice,
                                             PostedOn = new DateTime(2014,1,20),
                                             Body = @"Fixed in changeset f089babd48431bfbdb84fbaf9bc89270b213043e"
                                         }
@@ -79,11 +80,12 @@ Also the exception probably should not be NotImplementedException",
                         ClosedBy = SeedData.People.Luke,
                         ClosedOn = new DateTime(2013, 4, 12),
                         AssignedTo = SeedData.People.Arthur,
+                        Votes = 275,
                         Comments = new List<WorkItemComment>
                         {
                                         new WorkItemComment
                                         {
-                                            PosteByPerson = SeedData.People.Arthur,
+                                            PosteBy = SeedData.People.Arthur,
                                             PostedOn = new DateTime(2013,3,20),
                                             Body = 
 @"Fixed in b3eca2c141c0

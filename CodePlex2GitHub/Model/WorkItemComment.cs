@@ -12,6 +12,6 @@ namespace CodePlex2GitHub.Model
         public int Id { get; set; }
         public string Body { get; set; }
         public DateTime PostedOn { get; set; }
-        public Person PosteByPerson { get; set; }
+        public Person PosteBy { get; set; }
     }
 }

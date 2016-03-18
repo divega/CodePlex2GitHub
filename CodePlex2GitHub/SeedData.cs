@@ -37,15 +37,15 @@ namespace CodePlex2GitHub
                     Tests);
             }
 
-            public static Component BuildInfraestructure => new Component { Id = 1, Description = "Build/Infraesctructure" };
-            public static Component Designer => new Component { Id = 2, Description = "Designer" };
-            public static Component Documentation => new Component { Id = 3, Description = "Documentation" };
-            public static Component Migrations => new Component { Id = 4, Description = "Migrations" };
-            public static Component PowerTools => new Component { Id = 5, Description = "Power Tools" };
-            public static Component PowerShell => new Component { Id = 6, Description = "PowerShell" };
-            public static Component Runtime => new Component { Id = 7, Description = "Runtime" };
-            public static Component Templates => new Component { Id = 8, Description = "Templates" };
-            public static Component Tests => new Component { Id = 9, Description = "Tests" };
+            public static Component BuildInfraestructure => new Component { Id = 1, Name = "Build/Infra", GitHubName = "build"};
+            public static Component Designer => new Component { Id = 2, Name = "Designer", GitHubName = "designer"};
+            public static Component Documentation => new Component { Id = 3, Name = "Documentation", GitHubName = "docs"};
+            public static Component Migrations => new Component { Id = 4, Name = "Migrations", GitHubName = "migrations" };
+            public static Component PowerTools => new Component { Id = 5, Name = "PowerTools", GitHubName = "powertools"};
+            public static Component PowerShell => new Component { Id = 6, Name = "PowerShell", GitHubName = "powershell"};
+            public static Component Runtime => new Component { Id = 7, Name = "Runtime", GitHubName = "runtime"};
+            public static Component Templates => new Component { Id = 8, Name = "Templates", GitHubName = "templates"};
+            public static Component Tests => new Component { Id = 9, Name = "Tests", GitHubName = "test"};
         }
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -179,12 +179,12 @@ For details on how to get the latest runtime and tooling, see the [url:Get It pa
                     ExternalIssue,
                     WontFix);
             }
-            public static WorkItemClosingReason Fixed => new WorkItemClosingReason { Id = 1, Description = "Fixed" };
-            public static WorkItemClosingReason ByDesign => new WorkItemClosingReason { Id = 2, Description = "By Design" };
-            public static WorkItemClosingReason CouldNotRepro => new WorkItemClosingReason { Id = 3, Description = "Could Not Repro" };
-            public static WorkItemClosingReason Duplicate => new WorkItemClosingReason { Id = 4, Description = "Duplicate" };
-            public static WorkItemClosingReason ExternalIssue => new WorkItemClosingReason { Id = 5, Description = "External Issue" };
-            public static WorkItemClosingReason WontFix => new WorkItemClosingReason { Id = 6, Description = "Won't Fix" };
+            public static WorkItemClosingReason Fixed => new WorkItemClosingReason { Id = 1, Name = "Fixed", GitHubName = "fixed"};
+            public static WorkItemClosingReason ByDesign => new WorkItemClosingReason { Id = 2, Name = "By Design", GitHubName = "bydesign"};
+            public static WorkItemClosingReason CouldNotRepro => new WorkItemClosingReason { Id = 3, Name = "Could Not Repro", GitHubName = "norepro"};
+            public static WorkItemClosingReason Duplicate => new WorkItemClosingReason { Id = 4, Name = "Duplicate", GitHubName = "duplicate" };
+            public static WorkItemClosingReason ExternalIssue => new WorkItemClosingReason { Id = 5, Name = "External Issue", GitHubName = "external"};
+            public static WorkItemClosingReason WontFix => new WorkItemClosingReason { Id = 6, Name = "Won't Fix", GitHubName = "wontfix"};
         }
 
         public static class People

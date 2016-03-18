@@ -121,6 +121,7 @@
     <Compile Include="CodePlexDbContext.cs" />
     <Compile Include="FakeData.cs" />
     <Compile Include="GitHub.cs" />
+    <Compile Include="LabelExtensions.cs" />
     <Compile Include="Model\WorkItemAttachment.cs" />
     <Compile Include="Model\DiscussionComment.cs" />
     <Compile Include="Model\DiscussionTopic.cs" />

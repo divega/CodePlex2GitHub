@@ -16,8 +16,8 @@ namespace CodePlex2GitHub
         public DbSet<Release> Releases { get; set; }
 
 
-        public DbSet<WorkItem> Issues { get; set; }
-        public DbSet<WorkItemClosingReason> IssueClosingReasons { get; set; }
+        public DbSet<WorkItem> WorkItems { get; set; }
+        public DbSet<WorkItemClosingReason> WorkItemClosingReasons { get; set; }
 
 
         public DbSet<Discussion> Discussions { get; set; }
@@ -29,6 +29,20 @@ namespace CodePlex2GitHub
 
             optionsBuilder.UseInMemoryDatabase();
         }
+
+        public IQueryable<WorkItem> GetWorkItemAggregates()
+        {
+            return this.WorkItems.OrderBy(i => i.Number)
+                .Include(i => i.Comments).ThenInclude(c => c.PosteBy)
+                .Include(i => i.AssignedTo)
+                .Include(i => i.Attachments)
+                .Include(i => i.ClosingReason)
+                .Include(i => i.ClosedBy)
+                .Include(i => i.Component)
+                .Include(i => i.Release)
+                .Include(i => i.ReportedBy)
+                .Include(i => i.UpdatedBy);
+        } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

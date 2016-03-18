@@ -16,6 +16,8 @@ namespace CodePlex2GitHub
         private readonly CodePlexDbContext _context;
         private readonly string _repoOwner;
         private readonly string _repoName;
+        private readonly Dictionary<string, Milestone> MilestoneMap = new Dictionary<string, Milestone>();
+
         public GitHub(string authToken, string repoOwner, string repoName, CodePlexDbContext context)
         {
             _context = context;
@@ -28,23 +30,24 @@ namespace CodePlex2GitHub
         }
 
 
-        private Task<Issue> CreateEmptyIssue()
+        private Task<Issue> CreateEmptyIssueAsync()
         {
             return _client.Issue.Create(_repoOwner, _repoName, new NewIssue("New Issue"));
         }
-        private async Task<IssueUpdate> GetOrAddIssue(int number)
+
+        private async Task<IssueUpdate> GetOrAddIssueAsync(int number)
         {
             var existingIssue = await _client.Issue.Get(_repoOwner, _repoName, number);
             if (existingIssue != null)
             {
                 return existingIssue.ToUpdate();
             }
-            var newIssue = await CreateEmptyIssue();
+            var newIssue = await CreateEmptyIssueAsync();
             var issueUpdate = newIssue.ToUpdate();
             while (newIssue.Number < number)
             {
-                await DeleteIssue(newIssue.Number, issueUpdate);
-                newIssue = await CreateEmptyIssue();
+                await DeleteIssueAsync(newIssue.Number, issueUpdate);
+                newIssue = await CreateEmptyIssueAsync();
                 issueUpdate = newIssue.ToUpdate();
             }
 
@@ -55,20 +58,20 @@ namespace CodePlex2GitHub
             return issueUpdate;
         }
 
-        private async Task DeleteIssue(int number, IssueUpdate issueUpdate)
+        private async Task DeleteIssueAsync(int number, IssueUpdate issueUpdate)
         {
-            issueUpdate.Title = "This issue has been removed or does not exist";
+            issueUpdate.Title = "This issue has been deleted";
             issueUpdate.State = ItemState.Closed;
             issueUpdate.Assignee = null;
             issueUpdate.Body = null;
             issueUpdate.ClearLabels();
             issueUpdate.Milestone = null;
-            await UpdateIssue(number, issueUpdate);
-            await RemoveIssueComments(number);
+            await UpdateIssueAsync(number, issueUpdate);
+            await DeleteIssueCommentsAsync(number);
 
         }
 
-        private async Task RemoveIssueComments(int number)
+        private async Task DeleteIssueCommentsAsync(int number)
         {
             foreach (var comment in await _client.Issue.Comment.GetAllForIssue(_repoOwner, _repoName, number))
             {
@@ -76,17 +79,27 @@ namespace CodePlex2GitHub
             }
         }
 
-        private Task UpdateIssue(int number, IssueUpdate issueUpdate)
+        private Task UpdateIssueAsync(int number, IssueUpdate issueUpdate)
         {
             return _client.Issue.Update(_repoOwner, _repoName, number, issueUpdate);
         }
 
         public async Task MigrateAllIssuesAsync()
         {
-            // TODO: ForEachAsync (and FWIW MyForEachAsync) has issues when debugging
-            foreach (var codePlexIssue in _context.Issues.OrderBy(i => i.Number))
+            // TODO: Bug: ForEachAsync has issues when debugging
+            foreach (var codePlexIssue in _context.GetWorkItemAggregates())
             {
                 await MigrateIssueAsync(codePlexIssue);
+            }
+        }
+
+        public async Task MigrateIssueComments(WorkItem codePlexWorkItem)
+        {
+            foreach (var comment in codePlexWorkItem.Comments.OrderBy(c => c.PostedOn))
+            {
+                await _client.Issue.Comment.Create(_repoOwner, _repoName, codePlexWorkItem.Number, comment.Body);
+                // TODO: Add comment metadata
+
             }
         }
 
@@ -94,13 +107,19 @@ namespace CodePlex2GitHub
         {
             try
             {
-                var update = await GetOrAddIssue(codePlexWorkItem.Number);
+                var update = await GetOrAddIssueAsync(codePlexWorkItem.Number);
                 update.Title = codePlexWorkItem.Title;
                 update.Body = codePlexWorkItem.Body;
                 update.Assignee = codePlexWorkItem.AssignedTo?.GitHubAlias;
-                // TODO: fill in details and comments
-                //update.Milestone = codePlexWorkItem.Release?.Name;
-                await UpdateIssue(codePlexWorkItem.Number, update);
+                // TODO: fill in metadata
+                if (codePlexWorkItem.Release != null)
+                {
+                    update.Milestone = MilestoneMap[codePlexWorkItem.Release.GitHubName].Number;
+                }
+                await UpdateIssueAsync(codePlexWorkItem.Number, update);
+                await DeleteIssueCommentsAsync(codePlexWorkItem.Number); // todo: move into next method
+                await MigrateIssueComments(codePlexWorkItem);
+                await MigrateIssueLabels(codePlexWorkItem);
             }
             catch (Exception e)
             {
@@ -110,10 +129,53 @@ namespace CodePlex2GitHub
 
         }
 
-        public async Task MigrateReleases()
+        private async Task MigrateIssueLabels(WorkItem codePlexWorkItem)
+        {
+            var issueLabels = new HashSet<string>()
+                .AddIf(codePlexWorkItem.Title.Contains("UpForGrabs"), "up-for-grabs")
+                .AddIf(codePlexWorkItem.Type == WorkItem.WorkItemType.Issue, "bug")
+                .AddIf(codePlexWorkItem.Type == WorkItem.WorkItemType.Feature, "enhancement")
+                .AddIf(codePlexWorkItem.Type == WorkItem.WorkItemType.Task, "task")
+                .AddIf(codePlexWorkItem.Impact == WorkItem.WorkItemImpact.High, "high-impact")
+                .AddIf(codePlexWorkItem.Impact == WorkItem.WorkItemImpact.Low, "low-impact")
+                .AddIf(codePlexWorkItem.Release?.IsInvestigation == true, "investigation-needed")
+                .AddIf(codePlexWorkItem.Title.Contains("[Performance]"), "perf")
+                .AddIf(codePlexWorkItem.Title.Contains("[UX]"), "designer")
+                .AddIf(codePlexWorkItem.Title.Contains("[Migration]"), "migrations")
+                .AddIf(codePlexWorkItem.Title.Contains("regression"), "regression")
+                .AddIf(codePlexWorkItem.Status == WorkItem.WorkItemStatus.Active, "working");
+
+            issueLabels.Add(codePlexWorkItem.Component?.GitHubName);
+            issueLabels.Add(codePlexWorkItem.ClosingReason?.GitHubName);
+            issueLabels.Remove(null);
+
+            var totalVotes = codePlexWorkItem.Votes;
+
+            totalVotes = AddVoteLabel(issueLabels, totalVotes, 200);
+            totalVotes = AddVoteLabel(issueLabels, totalVotes, 100);
+            totalVotes = AddVoteLabel(issueLabels, totalVotes, 50);
+            totalVotes = AddVoteLabel(issueLabels, totalVotes, 20);
+            totalVotes = AddVoteLabel(issueLabels, totalVotes, 10);
+
+            await _client.Issue.Labels.ReplaceAllForIssue(_repoOwner, _repoName, codePlexWorkItem.Number, issueLabels.ToArray());
+
+        }
+
+        private static int AddVoteLabel(HashSet<string> issueLabels, int totalVotes, int voteStep)
+        {
+            if (totalVotes > voteStep)
+            {
+                issueLabels.Add($"{voteStep}+votes");
+                totalVotes -= voteStep;
+            }
+
+            return totalVotes;
+        }
+
+        public async Task MigrateReleasesAsync()
         {
             var codePlexReleases = await _context.Releases.Where(p => !p.IsInvestigation).OrderBy(p => p.GitHubName).ToListAsync();
-            var gitHubMilestones = await _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName);
+            var gitHubMilestones = await _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName,new MilestoneRequest {State = ItemState.All});
             foreach (var codePlexRelease in codePlexReleases)
             {
                 var gitHubMilestone = gitHubMilestones.SingleOrDefault(m => m.Title == codePlexRelease.GitHubName) ??
@@ -124,12 +186,77 @@ namespace CodePlex2GitHub
                 {
                     Title = gitHubMilestone.Title,
                     Description = codePlexRelease.Body,
-                    State = codePlexRelease.IsReleased?ItemState.Closed : ItemState.Open,
+                    State = codePlexRelease.IsReleased ? ItemState.Closed : ItemState.Open,
                     DueOn = codePlexRelease.ReleaseDate,
                 };
 
-                await _client.Issue.Milestone.Update(_repoOwner, _repoName, gitHubMilestone.Number, milestoneUpdate);
+                var updatedMilestone = await _client.Issue.Milestone.Update(_repoOwner, _repoName, gitHubMilestone.Number, milestoneUpdate);
+                MilestoneMap[updatedMilestone.Title] = updatedMilestone;
+            }
+        }
 
+        public async Task MigrateRepoLabelsAsync()
+        {
+            await DeleteAllNonStandardLabelsAsync();
+            await CreateLabelAsync("investigation-needed", "0052cc");
+            await CreateLabelAsync("task", "d4c5f9");
+            await CreateLabelAsync("perf", "fef2c0");
+            await CreateLabelAsync("test", "c7def8");
+            await CreateLabelAsync("up-for-grabs", "0090FF");
+            await CreateLabelAsync("pri0", "e11d21");
+            await CreateLabelAsync("pri1", "eb6420");
+            await CreateLabelAsync("needs-review", "e11d21");
+            await CreateLabelAsync("providers-beware", "fbca04");
+            await CreateLabelAsync("cleanup", "bfdadc");
+            await CreateLabelAsync("blocked", "e11d21");
+            await CreateLabelAsync("working", "cccccc");
+            await CreateLabelAsync("low-impact", "fad8c7");
+            await CreateLabelAsync("high-impact", "f7c6c7");
+            await CreateLabelAsync("+200votes", "5319e7");
+            await CreateLabelAsync("+100votes", "5319e7");
+            await CreateLabelAsync("+50votes", "5319e7");
+            await CreateLabelAsync("+20votes", "5319e7");
+            await CreateLabelAsync("+10votes", "5319e7");
+            await CreateLabelAsync("regression", "e11d21");
+            foreach (var component in _context.Components.OrderBy(c => c.Name))
+            {
+                await CreateLabelAsync(component.GitHubName, "c7def8");
+            }
+            foreach (var reason in _context.WorkItemClosingReasons.OrderBy(r => r.Name))
+            {
+                await CreateLabelAsync(reason.GitHubName, "006b75");
+            }
+        }
+
+        public async Task CreateLabelAsync(string name, string color)
+        {
+            if (!_labels.Contains(name))
+            {
+                await _client.Issue.Labels.Create(_repoOwner, _repoName, new NewLabel(name, color));
+                _labels.Add(name);
+            }
+        }
+
+        private readonly HashSet<string> _labels = new HashSet<string>
+        {
+            "bug",
+            "duplicate",
+            "enhancement",
+            "help wanted",
+            "invalid",
+            "question",
+            "wontfix"
+        };
+
+        private async Task DeleteAllNonStandardLabelsAsync()
+        {
+            var labels = await _client.Issue.Labels.GetAllForRepository(_repoOwner, _repoName);
+            foreach (var label in labels)
+            {
+                if (!_labels.Contains(label.Name))
+                {
+                    await _client.Issue.Labels.Delete(_repoOwner, _repoName, label.Name);
+                }
             }
         }
     }
