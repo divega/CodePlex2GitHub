@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime;
 using System.Text;
@@ -10,9 +11,10 @@ namespace CodePlex2GitHub.Model
 {
     public class WorkItem
     {
-        public int Number { get; set; }
-        public string Title { get; set; }
-        public string Body { get; set; }
+        [Key]
+        public int WorkItemId { get; set; }
+        public string Summary { get; set; }
+        public string Description { get; set; }
         public Person ReportedBy { get; set; }
         public DateTime ReportedOn { get; set; }
         public Person UpdatedBy { get; set; }
@@ -22,11 +24,11 @@ namespace CodePlex2GitHub.Model
         public DateTime ClosedOn { get; set; }
         public int Votes { get; set; } = 1;
         public WorkItemStatus Status { get; set; }
-        public WorkItemClosingReason ClosingReason { get; set; }
-        public WorkItemImpact? Impact { get; set; }
+        public WorkItemReasonClosed ReasonClosed { get; set; }
+        public WorkItemSeverity? Severity { get; set; }
         public WorkItemType? Type { get; set; }
         public Release Release { get; set; }
-        public Component Component { get; set; }
+        public WorkItemComponent WorkItemComponent { get; set; }
         public ICollection<WorkItemAttachment> Attachments { get; set; }
         public ICollection<WorkItemComment> Comments { get; set; }
         public enum WorkItemStatus
@@ -37,11 +39,11 @@ namespace CodePlex2GitHub.Model
             Closed
         }
 
-        public enum WorkItemImpact
+        public enum WorkItemSeverity
         {
-            Low,
-            Medium,
-            High
+            Low = 50,
+            Medium = 100,
+            High = 150
         }
 
         public enum WorkItemType

@@ -28,20 +28,20 @@ namespace CodePlex2GitHub
 
         static async Task MainAsync(string[] args)
         {
-            using (var context = new CodePlexDbContext())
+            using (var context = new CodePlexDbContext(args[0], args[1], int.Parse(args[2])))
             {
-                // DumpSnapshotModel(context);
+                //DumpModelSnapshot(context);
                 SeedData.Add(context);
                 FakeData.Add(context);
 
-                var gitHub = new GitHub(args[0], args[1], args[2], context);
+                var gitHub = new GitHub(args[3], args[4], args[5], context);
                 await gitHub.MigrateRepoLabelsAsync();
                 await gitHub.MigrateReleasesAsync();
                 await gitHub.MigrateAllIssuesAsync();
             }
         }
 
-        private static void DumpSnapshotModel(DbContext context)
+        private static void DumpModelSnapshot(DbContext context)
         {
             var codeHelper = new CSharpHelper();
             var generator = new CSharpMigrationsGenerator(
@@ -59,7 +59,7 @@ namespace CodePlex2GitHub
                 $"{contextType.Name}ModelSnapshot",
                 context.Model);
 
-            File.WriteAllText("..\\..\\Snapshot.cs", modelSnapshot);
+            File.WriteAllText("..\\..\\ModelSnapshot.cs", modelSnapshot);
         }
     }
 }

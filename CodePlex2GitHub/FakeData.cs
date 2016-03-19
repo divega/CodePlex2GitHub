@@ -24,21 +24,21 @@ namespace CodePlex2GitHub
                 context.AddRange(
                     new WorkItem
                     {
-                        Number = 2,
+                        WorkItemId = 2,
 
-                        Title = "Investigate FxCop warning on disposable classes",
-                        Body =
+                        Summary = "Investigate FxCop warning on disposable classes",
+                        Description =
 @"Hey @ajcvickers Currently there are quite a few cases where FxCop warnings have been suppressed for disposable classes. These suppressions may be okay, or the FxCop warnings may indicate real issues. Each one should be investigated.
 
 Suppressions include CA1001, CA2213, CA1063.",
-                        Component = SeedData.Components.Runtime,
-                        ClosingReason = SeedData.WorkItemClosingReasons.Fixed,
+                        WorkItemComponent = SeedData.Components.Runtime,
+                        ReasonClosed = SeedData.WorkItemClosingReasons.Fixed,
                         ReportedBy = SeedData.People.Arthur,
                         ReportedOn = new DateTime(2012, 4, 11),
                         UpdatedBy = SeedData.People.Murat,
                         UpatedOn = new DateTime(2014, 4, 25),
                         Release = SeedData.Releases.EF610,
-                        Impact = WorkItem.WorkItemImpact.Medium,
+                        Severity = WorkItem.WorkItemSeverity.Medium,
                         Status = WorkItem.WorkItemStatus.Closed,
                         Type = WorkItem.WorkItemType.Task,
                         Votes = 500,
@@ -60,22 +60,22 @@ Suppressions include CA1001, CA2213, CA1063.",
                     },
                     new WorkItem
                     {
-                        Number = 3,
+                        WorkItemId = 3,
 
-                        Title = "If spatial types cannot be loaded we should tell it to the user instead throwing an exception without message.",
-                        Body = 
+                        Summary = "If spatial types cannot be loaded we should tell it to the user instead throwing an exception without message.",
+                        Description = 
 @"If Microsoft.Sql.Types.dll assembly is not present DefaultSpatialServices will throw NotImplementedException without any error message. It is hard to figure out why the exception is thrown and how to fix it - vide: 
 http://stackoverflow.com/questions/10117008/net-4-5-beta-dbgeography-notimplementedexception
 Also the exception probably should not be NotImplementedException",
-                        Component = SeedData.Components.Runtime,
+                        WorkItemComponent = SeedData.Components.Runtime,
                         Status = WorkItem.WorkItemStatus.Closed,
-                        ClosingReason = SeedData.WorkItemClosingReasons.Fixed,
+                        ReasonClosed = SeedData.WorkItemClosingReasons.Fixed,
                         ReportedBy = SeedData.People.Pawel,
                         ReportedOn = new DateTime(2012, 4, 12),
                         UpdatedBy = SeedData.People.Eilon,
                         UpatedOn = new DateTime(2015, 7, 27),
                         Release = SeedData.Releases.EF600,
-                        Impact = WorkItem.WorkItemImpact.Medium,
+                        Severity = WorkItem.WorkItemSeverity.Medium,
                         Type = WorkItem.WorkItemType.Issue,
                         ClosedBy = SeedData.People.Luke,
                         ClosedOn = new DateTime(2013, 4, 12),

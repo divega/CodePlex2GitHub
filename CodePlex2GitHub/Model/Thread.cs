@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class Person
+    public class Thread
     {
         [Key]
-        public string Alias { get; set; }
-        public string GitHubAlias { get; set; }
-        public bool IsTeamMember { get; set; }
+        public int ThreadId { get; set; }
+        public string Title { get; set; }
+        public ThreadTag Tag { get; set; }
+        public ICollection<ThreadPost> Posts  { get; set; }
     }
 }
