@@ -1,7 +1,5 @@
-﻿using System.Data.Common;
-using System.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using System.Linq;
-using System.Linq.Expressions;
 using CodePlex2GitHub.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,7 +9,8 @@ namespace CodePlex2GitHub
     public class CodePlexDbContext : DbContext
     {
         private readonly string _connectionString;
-        private readonly int _projectId = 0;
+        private readonly int _projectId;
+
         public CodePlexDbContext(string databaseServer, string databaseName, int projectId)
         {
             var csb = new SqlConnectionStringBuilder
@@ -38,19 +37,18 @@ namespace CodePlex2GitHub
         public IQueryable<WorkItem> GetWorkItemAggregates()
         {
             return ApplyTenantFilter(WorkItems
-                .OrderBy(i => i.WorkItemId)
                 .Include(i => i.AssignedTo)
                 .Include(i => i.ClosedBy)
                 .Include(i => i.ReportedBy)
                 .Include(i => i.LastUpdatedBy)
                 .Include(i => i.Comments).ThenInclude(c => c.User)
-                //.Include(i => i.Attachments).ThenInclude(a => a.File.Content)
-                );
+                .Include(i => i.Attachments).ThenInclude(a => a.File.Content)
+                ).OrderBy(i => i.WorkItemId);
         }
 
         public IQueryable<Thread> GetThreadAggregates()
         {
-            return ApplyTenantFilter(this.Set<Thread>()
+            return ApplyTenantFilter(Set<Thread>()
                 .FromSql(
                     @"select Thread.ThreadId, Thread.ProjectId, Title, TagName " +
                     @"from Thread " +
@@ -62,25 +60,41 @@ namespace CodePlex2GitHub
 
         public IQueryable<Release> GetReleases()
         {
-            return ApplyTenantFilter(this.Set<Release>()); 
+            return ApplyTenantFilter(Set<Release>());
         }
 
         public IQueryable<string> GetWorkItemComponents()
         {
-            return ApplyTenantFilter(this.WorkItems).Select(i => i.Component).Distinct().Where(c => !string.IsNullOrEmpty(c));
+            return ApplyTenantFilter(WorkItems)
+                .Select(i => i.Component)
+                .Distinct()
+                .Where(c => !string.IsNullOrEmpty(c));
         }
-        private IQueryable<T> ApplyTenantFilter<T>(IQueryable<T> source) where T: class // https://github.com/aspnet/EntityFramework/issues/4875
+
+        private IQueryable<T> ApplyTenantFilter<T>(IQueryable<T> source) where T : class
+            // https://github.com/aspnet/EntityFramework/issues/4875
             => source.Where(e => EF.Property<int>(e, "ProjectID") == _projectId);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
             modelBuilder
                 .Entity<Thread>(AddTenantId)
                 .Entity<WorkItem>(AddTenantId)
                 .Entity<WorkItemComment>(AddTenantId)
                 .Entity<WorkItemAttachment>(AddTenantId)
                 .Entity<Release>(AddTenantId);
+
+            modelBuilder.Entity<WorkItem>().HasMany(i => i.Comments)
+                .WithOne()
+                .HasForeignKey(c => c.WorkItemId);
+
+            modelBuilder.Entity<WorkItem>().HasMany(i => i.Attachments)
+                .WithOne().HasForeignKey(a => a.WorkItemId);
+
+            modelBuilder.Entity<FileAttachment>()
+                .HasOne(f => f.Content)
+                .WithOne()
+                .HasForeignKey<FileAttachmentContent>(c => c.FileAttachmentId);
         }
 
         private void AddTenantId<T>(EntityTypeBuilder<T> builder) where T : class

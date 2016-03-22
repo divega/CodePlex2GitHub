@@ -13,6 +13,7 @@ namespace CodePlex2GitHub.Model
     {
         [Key]
         public int CommentId { get; set; }
+        public int WorkItemId { get; set; }
         public string Comment { get; set; }
         public DateTime Date { get; set; }
         [ForeignKey("UserId")]
