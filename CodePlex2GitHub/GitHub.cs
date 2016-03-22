@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CodePlex2GitHub.Model;
-using Microsoft.EntityFrameworkCore;
 using Octokit;
 
 namespace CodePlex2GitHub
@@ -12,11 +11,6 @@ namespace CodePlex2GitHub
     {
         private readonly GitHubClient _client;
         private readonly CodePlexDbContext _context;
-
-        private readonly Dictionary<string, Milestone> _milestoneMap = new Dictionary<string, Milestone>
-        {
-            {"", null}
-        };
 
         private readonly Dictionary<string, string> _nameMap = new Dictionary<string, string>
         {
@@ -36,7 +30,6 @@ namespace CodePlex2GitHub
             {"External Issue", "external"},
             {"Won’t Fix", "wontfix"},
             {"General", null},
-            {"", null},
             {"EF Runtime", "runtime"},
             {"EF Power Tools", "powertools"},
             {"EF Designer ", "designer"},
@@ -58,10 +51,22 @@ namespace CodePlex2GitHub
             {"smitpatel", "smitpatel"},
             {"moozzyk", "moozzyk"},
             {"lukew", "lukewaters"},
+            {"EF 5.0.0", "5.0.0"},
+            {"EF 6.0.0", "6.0.0"},
+            {"EF 6.0.1", "6.0.1"},
+            {"EF 6.0.2", "6.0.2"},
+            {"EF 6.1.0", "6.1.0"},
+            {"EF 6.1.1", "6.1.1"},
+            {"EF 6.1.2", "6.1.2"},
+            {"EF 6.1.3", "6.1.3"},
+            {"EF 6.2.0", "6.2.0"},
+            {"", null},
         };
 
         private readonly string _repoName;
         private readonly string _repoOwner;
+
+        private Dictionary<string, Milestone> _milestoneMap = null;
 
         public GitHub(string authToken, string repoOwner, string repoName, CodePlexDbContext context)
         {
@@ -154,9 +159,9 @@ namespace CodePlex2GitHub
         public async Task MigrateIssueComments(WorkItem codePlexWorkItem)
         {
             await DeleteIssueCommentsAsync(codePlexWorkItem.WorkItemId);
-            foreach (var comment in codePlexWorkItem.Comments.OrderBy(c => c.PostedOn))
+            foreach (var comment in codePlexWorkItem.Comments.OrderBy(c => c.Date))
             {
-                await _client.Issue.Comment.Create(_repoOwner, _repoName, codePlexWorkItem.WorkItemId, comment.Body);
+                await _client.Issue.Comment.Create(_repoOwner, _repoName, codePlexWorkItem.WorkItemId, comment.Comment);
                 // TODO: Add comment metadata
             }
         }
@@ -218,39 +223,65 @@ namespace CodePlex2GitHub
         }
 
 
-        public async Task MigrateReleasesAsync()
+        public async Task MigrateMilestonesAsync()
         {
             var codePlexReleases =
-                    _context.GetReleases().Where(p => p.Name != "Investigation")
-                        .OrderBy(p => GetGitHubName(p.Name));
+                _context.GetReleases().Where(p => p.Name != "Investigation")
+                    .OrderBy(p => GetGitHubName(p.Name));
 
-            var gitHubMilestones =
-                await
+            _milestoneMap =
+                (await
                     _client.Issue.Milestone.GetAllForRepository(_repoOwner, _repoName,
-                        new MilestoneRequest { State = ItemState.All });
+                        new MilestoneRequest {State = ItemState.All})).ToDictionary(m => m.Title);
+
+            // we need a null milestone entry for work items that contain an empty string for release
+            _milestoneMap[""] = null;
 
             foreach (var codePlexRelease in codePlexReleases)
             {
-                var gitHubMilestone =
-                    gitHubMilestones.SingleOrDefault(m => m.Title == GetGitHubName(codePlexRelease.Name)) ??
-                    await _client.Issue.Milestone.Create(_repoOwner, _repoName,
-                        new NewMilestone(GetGitHubName(codePlexRelease.Name)));
-
-                var milestoneUpdate = new MilestoneUpdate
+                Milestone gitHubMilestone = null;
+                var milestoneName = GetGitHubName(codePlexRelease.Name);
+                if (_milestoneMap.TryGetValue(milestoneName, out gitHubMilestone))
                 {
-                    Title = gitHubMilestone.Title,
-                    Description = codePlexRelease.Description,
-                    State =
-                        codePlexRelease.DevelopmentStatus == DevelopmentStatus.Planning
-                            ? ItemState.Open
-                            : ItemState.Closed,
-                    DueOn = codePlexRelease.ReleaseDate
-                };
+                    var milestoneUpdate = new MilestoneUpdate
+                    {
+                        Title = gitHubMilestone.Title,
+                        Description = codePlexRelease.Description,
+                        State =
+                            codePlexRelease.DevelopmentStatus == DevelopmentStatus.Planning
+                                ? ItemState.Open
+                                : ItemState.Closed,
+                        DueOn = codePlexRelease.ReleaseDate
+                    };
 
-                var updatedMilestone =
-                    await _client.Issue.Milestone.Update(_repoOwner, _repoName, gitHubMilestone.Number, milestoneUpdate);
-                _milestoneMap[updatedMilestone.Title] = updatedMilestone;
+                    if (milestoneUpdate.Description != gitHubMilestone.Description ||
+                        milestoneUpdate.State != gitHubMilestone.State || milestoneUpdate.DueOn != gitHubMilestone.DueOn)
+                    {
+                        gitHubMilestone =
+                            await
+                                _client.Issue.Milestone.Update(_repoOwner, _repoName, gitHubMilestone.Number,
+                                    milestoneUpdate);
+
+                        _milestoneMap[gitHubMilestone.Title] = gitHubMilestone;
+                    }
+                }
+                else
+                {
+                    gitHubMilestone =
+                        await _client.Issue.Milestone.Create(_repoOwner, _repoName,
+                            new NewMilestone(milestoneName)
+                            {
+                                Description = codePlexRelease.Description,
+                                State = codePlexRelease.DevelopmentStatus == DevelopmentStatus.Planning
+                                    ? ItemState.Open
+                                    : ItemState.Closed,
+                                DueOn = codePlexRelease.ReleaseDate
+                            });
+                    _milestoneMap[gitHubMilestone.Title] = gitHubMilestone;
+                }
             }
+
+            // TODO: should we also delete unused existing milestones?
         }
 
         public async Task MigrateRepoLabelsAsync()
@@ -296,7 +327,7 @@ namespace CodePlex2GitHub
 
             foreach (var component in _context.GetWorkItemComponents())
             {
-                desired[GetGitHubName(component)]="c7def8";
+                desired[GetGitHubName(component)] = "c7def8";
             }
 
             foreach (var label in desired)
@@ -314,11 +345,10 @@ namespace CodePlex2GitHub
                 }
             }
 
-            foreach (var existingLabel in current.Except(desired))
-            {
-                await _client.Issue.Labels.Delete(_repoOwner, _repoName, existingLabel.Key);
-            }
-
+            //foreach (var existingLabel in current.Except(desired))
+            //{
+            //    await _client.Issue.Labels.Delete(_repoOwner, _repoName, existingLabel.Key);
+            //}
         }
     }
 }

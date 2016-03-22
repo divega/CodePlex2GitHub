@@ -35,7 +35,9 @@ namespace CodePlex2GitHub.Model
         public string Type { get; set; }
         public string PlannedForRelease { get; set; }
         public string Component { get; set; }
-        public ICollection<WorkItemAttachment> Attachments { get; set; }
+        //[ForeignKey("WorkItemId")]
+        //public ICollection<WorkItemAttachment> Attachments { get; set; }
+        [ForeignKey("WorkItemId")]
         public ICollection<WorkItemComment> Comments { get; set; }
         public static class WorkItemStatus
         {

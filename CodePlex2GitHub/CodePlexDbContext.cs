@@ -24,10 +24,11 @@ namespace CodePlex2GitHub
             _projectId = projectId;
         }
 
-        public DbSet<User> People { get; set; }
-        public DbSet<Release> Release { get; set; }
+        public DbSet<User> User { get; set; }
         public DbSet<WorkItem> WorkItems { get; set; }
         public DbSet<Thread> Thread { get; set; }
+        public DbSet<WorkItemComment> WorkItemComments { get; set; }
+        public DbSet<WorkItemAttachment> WorkItemAttachments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -41,8 +42,10 @@ namespace CodePlex2GitHub
                 .Include(i => i.AssignedTo)
                 .Include(i => i.ClosedBy)
                 .Include(i => i.ReportedBy)
-                .Include(i => i.LastUpdatedBy).Include(i => i.Comments).ThenInclude(c => c.PosteBy)
-                .Include(i => i.Attachments).ThenInclude(a => a.File.Content));
+                .Include(i => i.LastUpdatedBy)
+                .Include(i => i.Comments).ThenInclude(c => c.User)
+                //.Include(i => i.Attachments).ThenInclude(a => a.File.Content)
+                );
         }
 
         public IQueryable<Thread> GetThreadAggregates()
@@ -75,6 +78,7 @@ namespace CodePlex2GitHub
             modelBuilder
                 .Entity<Thread>(AddTenantId)
                 .Entity<WorkItem>(AddTenantId)
+                .Entity<WorkItemComment>(AddTenantId)
                 .Entity<WorkItemAttachment>(AddTenantId)
                 .Entity<Release>(AddTenantId);
         }

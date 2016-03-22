@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime;
 using System.Text;
@@ -9,9 +11,11 @@ namespace CodePlex2GitHub.Model
 {
     public class WorkItemComment
     {
-        public int Id { get; set; }
-        public string Body { get; set; }
-        public DateTime PostedOn { get; set; }
-        public User PosteBy { get; set; }
+        [Key]
+        public int CommentId { get; set; }
+        public string Comment { get; set; }
+        public DateTime Date { get; set; }
+        [ForeignKey("UserId")]
+        public User User { get; set; }
     }
 }

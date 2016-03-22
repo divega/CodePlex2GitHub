@@ -30,10 +30,10 @@ namespace CodePlex2GitHub
         {
             using (var context = new CodePlexDbContext(args[0], args[1], int.Parse(args[2])))
             {
-                //DumpModelSnapshot(context);
+                DumpModelSnapshot(context);
                 var gitHub = new GitHub(args[3], args[4], args[5], context);
                 await gitHub.MigrateRepoLabelsAsync();
-                await gitHub.MigrateReleasesAsync();
+                await gitHub.MigrateMilestonesAsync();
                 await gitHub.MigrateAllIssuesAsync();
             }
         }
