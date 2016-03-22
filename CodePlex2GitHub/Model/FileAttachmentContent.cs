@@ -4,13 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace CodePlex2GitHub.Model
 {
-    public class WorkItemReasonClosed
+    public class FileAttachmentContent
     {
         [Key]
-        public string Name { get; set; }
-        public string GitHubName { get; set; }
+        public int FileAttachmentId { get; set; }
+        public byte[] Content { get; set; }
     }
 }

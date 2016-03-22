@@ -12,7 +12,7 @@ namespace CodePlex2GitHub.Model
         [Key]
         public int ThreadId { get; set; }
         public string Title { get; set; }
-        public ThreadTag Tag { get; set; }
+        public string Tag { get; set; }
         public ICollection<ThreadPost> Posts  { get; set; }
     }
 }

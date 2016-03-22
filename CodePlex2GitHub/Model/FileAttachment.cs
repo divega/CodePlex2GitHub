@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class WorkItemComment
+    public class FileAttachment
     {
         public int Id { get; set; }
-        public string Body { get; set; }
-        public DateTime PostedOn { get; set; }
-        public User PosteBy { get; set; }
+        public string FileName { get; set; }
+        public FileAttachmentContent Content { get; set; }
     }
 }

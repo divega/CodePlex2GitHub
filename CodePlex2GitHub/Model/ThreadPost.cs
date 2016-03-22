@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -14,8 +15,9 @@ namespace CodePlex2GitHub.Model
         public int PostId { get; set; }
         public string Text { get; set; }
         public DateTime PostedDate { get; set; }
-        public Person PostedBy { get; set; }
-        public Person MarkedAsAnswerBy { get; set; }
-        public DateTimeOffset MarkedAsAnswerDate { get; set; }
+        public string PostedBy { get; set; } 
+        [ForeignKey("MarkedAsAnswerBy")]
+        public string MarkedAsAnswerBy { get; set; }
+        public DateTime? MarkedAsAnswerDate { get; set; }
     }
 }

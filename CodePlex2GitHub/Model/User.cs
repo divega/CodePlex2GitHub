@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 
 namespace CodePlex2GitHub.Model
 {
-    public class Person
+    public class User
     {
         [Key]
-        public string Alias { get; set; }
-        public string GitHubAlias { get; set; }
-        public bool IsTeamMember { get; set; }
+        public int UserId { get; set; }
+        public string Name { get; set; }
     }
 }
