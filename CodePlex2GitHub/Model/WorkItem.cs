@@ -19,12 +19,9 @@ namespace CodePlex2GitHub.Model
         public string Description { get; set; }
         public User ReportedBy { get; set; }
         public DateTime ReportedDate { get; set; }
-        [ForeignKey("LastUpdatedByUserID")]
         public User LastUpdatedBy { get; set; }
         public DateTime LastUpdatedDate { get; set; }
-        [ForeignKey("AssignedToUserID")]
         public User AssignedTo { get; set; }
-        [ForeignKey("ClosedByUserID")]
         public User ClosedBy { get; set; }
         public DateTime ClosedDate { get; set; }
         public int VoteCount { get; set; } = 1;

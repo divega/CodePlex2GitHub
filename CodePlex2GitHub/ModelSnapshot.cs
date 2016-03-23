@@ -120,9 +120,9 @@ namespace CodePlex2GitHub
                     b.Property<int>("WorkItemId")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int>("AssignedToUserID");
+                    b.Property<int?>("AssignedToUserId");
 
-                    b.Property<int>("ClosedByUserID");
+                    b.Property<int?>("ClosedByUserId");
 
                     b.Property<DateTime>("ClosedDate");
 
@@ -130,7 +130,7 @@ namespace CodePlex2GitHub
 
                     b.Property<string>("Description");
 
-                    b.Property<int>("LastUpdatedByUserID");
+                    b.Property<int?>("LastUpdatedByUserId");
 
                     b.Property<DateTime>("LastUpdatedDate");
 
@@ -156,11 +156,11 @@ namespace CodePlex2GitHub
 
                     b.HasKey("WorkItemId");
 
-                    b.HasIndex("AssignedToUserID");
+                    b.HasIndex("AssignedToUserId");
 
-                    b.HasIndex("ClosedByUserID");
+                    b.HasIndex("ClosedByUserId");
 
-                    b.HasIndex("LastUpdatedByUserID");
+                    b.HasIndex("LastUpdatedByUserId");
 
                     b.HasIndex("ReportedByUserId");
 
@@ -231,18 +231,15 @@ namespace CodePlex2GitHub
                 {
                     b.HasOne("CodePlex2GitHub.Model.User")
                         .WithMany()
-                        .HasForeignKey("AssignedToUserID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("AssignedToUserId");
 
                     b.HasOne("CodePlex2GitHub.Model.User")
                         .WithMany()
-                        .HasForeignKey("ClosedByUserID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("ClosedByUserId");
 
                     b.HasOne("CodePlex2GitHub.Model.User")
                         .WithMany()
-                        .HasForeignKey("LastUpdatedByUserID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("LastUpdatedByUserId");
 
                     b.HasOne("CodePlex2GitHub.Model.User")
                         .WithMany()

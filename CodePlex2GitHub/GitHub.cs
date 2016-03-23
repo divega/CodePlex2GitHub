@@ -152,6 +152,7 @@ namespace CodePlex2GitHub
             // TODO: Bug: ForEachAsync has issues when debugging
             foreach (var codePlexIssue in _context.GetWorkItemAggregates())
             {
+                // TODO, is there a non-nullable FK on the attachment path?
                 await MigrateIssueAsync(codePlexIssue);
             }
         }

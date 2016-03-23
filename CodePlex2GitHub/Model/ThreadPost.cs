@@ -16,7 +16,6 @@ namespace CodePlex2GitHub.Model
         public string Text { get; set; }
         public DateTime PostedDate { get; set; }
         public string PostedBy { get; set; } 
-        [ForeignKey("MarkedAsAnswerBy")]
         public string MarkedAsAnswerBy { get; set; }
         public DateTime? MarkedAsAnswerDate { get; set; }
     }
