@@ -11,10 +11,7 @@ namespace CodePlex2GitHub.Model
 {
     public class WorkItemAttachment
     {
-        [Key]
         public int WorkItemId { get; set; }
-        [Key]
-        [ForeignKey("FileAttachmentId")]
-        public FileAttachment File { get; set; }
+        public FileAttachment FileAttachment { get; set; }
     }
 }

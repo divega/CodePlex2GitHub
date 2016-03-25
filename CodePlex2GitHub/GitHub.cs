@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CodePlex2GitHub.Model;
+using Microsoft.EntityFrameworkCore;
 using Octokit;
 
 namespace CodePlex2GitHub
@@ -11,6 +13,8 @@ namespace CodePlex2GitHub
     {
         private readonly GitHubClient _client;
         private readonly CodePlexDbContext _context;
+
+
 
         private readonly Dictionary<string, string> _nameMap = new Dictionary<string, string>
         {
@@ -21,7 +25,7 @@ namespace CodePlex2GitHub
             {"Migrations", "migrations"},
             {"Power Tools", "powertools"},
             {"PowerShell", "powershell"},
-            {"Runtime", "runtime"},
+            {"Runtime", null},
             {"Templates", "templates"},
             {"Tests", "test"},
             {"By Design", "bydesign"},
@@ -29,8 +33,9 @@ namespace CodePlex2GitHub
             {"Duplicate", "duplicate"},
             {"External Issue", "external"},
             {"Won’t Fix", "wontfix"},
+            {"Unassigned", null},
             {"General", null},
-            {"EF Runtime", "runtime"},
+            {"EF Runtime", null},
             {"EF Power Tools", "powertools"},
             {"EF Designer ", "designer"},
             {"Future", "Backlog"},
@@ -82,14 +87,18 @@ namespace CodePlex2GitHub
         private string GetGitHubName(string codePlexName)
         {
             string gitHubName = null;
-            return _nameMap.TryGetValue(codePlexName, out gitHubName)
-                ? gitHubName
-                : codePlexName;
+            return string.IsNullOrWhiteSpace(codePlexName)
+                ? null
+                : _nameMap.TryGetValue(codePlexName, out gitHubName)
+                    ? gitHubName
+                    : codePlexName;
         }
 
         private int? GetHitHubMilestone(string releaseName)
         {
-            return (releaseName == null) ? null : _milestoneMap[GetGitHubName(releaseName)]?.Number;
+            return string.IsNullOrWhiteSpace(releaseName)
+                ? null
+                : _milestoneMap[GetGitHubName(releaseName)]?.Number;
         }
 
 
@@ -98,33 +107,9 @@ namespace CodePlex2GitHub
             return _client.Issue.Create(_repoOwner, _repoName, new NewIssue(title));
         }
 
-        private async Task<IssueUpdate> GetOrAddIssueAsync(int number, string title)
-        {
-            var existingIssue = await _client.Issue.Get(_repoOwner, _repoName, number);
-            if (existingIssue != null)
-            {
-                return existingIssue.ToUpdate();
-            }
-            var newIssue = await CreateEmptyIssueAsync(title);
-            var issueUpdate = newIssue.ToUpdate();
-            while (newIssue.Number < number)
-            {
-                await DeleteIssueAsync(newIssue.Number, issueUpdate);
-                newIssue = await CreateEmptyIssueAsync(title);
-                issueUpdate = newIssue.ToUpdate();
-            }
-
-            if (newIssue.Number > number)
-            {
-                throw new InvalidOperationException(
-                    $"Issues out of sequence: CodePlex #{number}, GitHub #{newIssue.Number}");
-            }
-            return issueUpdate;
-        }
-
         private async Task DeleteIssueAsync(int number, IssueUpdate issueUpdate)
         {
-            issueUpdate.Title = "This issue has been deleted";
+            issueUpdate.Title = "Deleted";
             issueUpdate.State = ItemState.Closed;
             issueUpdate.Assignee = null;
             issueUpdate.Body = null;
@@ -149,30 +134,61 @@ namespace CodePlex2GitHub
 
         public async Task MigrateAllIssuesAsync()
         {
+            Console.WriteLine("Obtaining existing issues from GitHub");
+            var existingIssues = new HashSet<int>(
+                (await _client.Issue.GetAllForRepository(
+                    _repoOwner,
+                    _repoName,
+                    new RepositoryIssueRequest
+                    {
+                        Filter = IssueFilter.All,
+                        State = ItemState.All
+                    }))
+                    .Select(i => i.Number));
+            Console.WriteLine($"{existingIssues.Count} existing issues obtained");
+
             // TODO: Bug: ForEachAsync has issues when debugging
-            foreach (var codePlexIssue in _context.GetWorkItemAggregates())
+            _context.GetWorkItemComments().Load();
+            _context.GetWorkItemAttachments().Load();
+            foreach (var workItem in _context.GetWorkItems().Take(100))
             {
-                // TODO, is there a non-nullable FK on the attachment path?
-                await MigrateIssueAsync(codePlexIssue);
+                Console.WriteLine($"Processing issue {workItem.WorkItemId}");
+                await MigrateIssueAsync(workItem, existingIssues);
             }
+            Console.WriteLine("Done with issues");
         }
 
-        public async Task MigrateIssueComments(WorkItem codePlexWorkItem)
+        public async Task MigrateIssueComments(WorkItem workItem)
         {
-            await DeleteIssueCommentsAsync(codePlexWorkItem.WorkItemId);
-            foreach (var comment in codePlexWorkItem.Comments.OrderBy(c => c.Date))
+            await DeleteIssueCommentsAsync(workItem.WorkItemId);
+            if (workItem.Comments != null)
             {
-                await _client.Issue.Comment.Create(_repoOwner, _repoName, codePlexWorkItem.WorkItemId, comment.Comment);
-                // TODO: Add comment metadata
+                foreach (var comment in workItem.Comments.OrderBy(c => c.Date))
+                {
+                    await CreateIssueComment(workItem.WorkItemId, comment.Comment, comment.User?.Name, comment.Date);
+                }
+            }
+            if (workItem.ClosedDate.HasValue && !string.IsNullOrWhiteSpace(workItem.ClosedComment))
+            {
+                await
+                    CreateIssueComment(workItem.WorkItemId, workItem.ClosedComment, workItem.ClosedBy?.Name,
+                        workItem.ClosedDate.Value);
             }
         }
 
-        public async Task MigrateIssueAsync(WorkItem workItem)
+        private async Task<IssueComment> CreateIssueComment(int number, string body, string user, DateTime date)
+        {
+            return
+                await
+                    _client.Issue.Comment.Create(_repoOwner, _repoName, number,
+                        $"_**[{user}](http://www.codeplex.com/site/users/view/{user})** commented on {date:MMMM dd yyyy}_\n\n{body}");
+        }
+
+        public async Task MigrateIssueAsync(WorkItem workItem, ISet<int> existingIssues)
         {
             try
             {
-                var update = await GetOrAddIssueAsync(workItem.WorkItemId, workItem.Summary);
-                update.Title = workItem.Summary;
+                var update = await GetOrUpdateIssue(existingIssues, workItem.WorkItemId, workItem.Summary);
                 update.Body = workItem.Description;
                 update.Assignee = GetGitHubName(workItem.AssignedTo?.Name);
                 update.State = workItem.Status == WorkItem.WorkItemStatus.Closed
@@ -183,12 +199,43 @@ namespace CodePlex2GitHub
                 await UpdateIssueAsync(workItem.WorkItemId, update);
                 await MigrateIssueComments(workItem);
                 await MigrateIssueLabels(workItem);
+                // TODO: Migrate attachments
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine($"Updating issue {workItem.WorkItemId} failed: {e.Message}");
                 throw;
             }
+        }
+
+        private async Task<IssueUpdate> GetOrUpdateIssue(ISet<int> existingIssues, int number, string title)
+        {
+            IssueUpdate update;
+            if (existingIssues.Contains(number))
+            {
+                var existingIssue = await _client.Issue.Get(_repoOwner, _repoName, number);
+                update = existingIssue.ToUpdate();
+                update.Title = title;
+            }
+            else
+            {
+                var newIssue = await CreateEmptyIssueAsync(title);
+                update = newIssue.ToUpdate();
+
+                while (newIssue.Number < number)
+                {
+                    await DeleteIssueAsync(newIssue.Number, update);
+                    newIssue = await CreateEmptyIssueAsync(title);
+                    update = newIssue.ToUpdate();
+                }
+
+                if (newIssue.Number > number)
+                {
+                    throw new InvalidOperationException(
+                        $"Issues got out of sequence: CodePlex #{number}, GitHub #{newIssue.Number}");
+                }
+            }
+            return update;
         }
 
         private async Task MigrateIssueLabels(WorkItem workItem)
@@ -199,7 +246,6 @@ namespace CodePlex2GitHub
                 .AddIf(workItem.Type == WorkItem.WorkItemType.Feature, "enhancement")
                 .AddIf(workItem.Type == WorkItem.WorkItemType.Task, "task")
                 .AddIf(workItem.Severity == WorkItem.WorkItemSeverity.High, "high-impact")
-                .AddIf(workItem.Severity == WorkItem.WorkItemSeverity.Low, "low-impact")
                 .AddIf(workItem.PlannedForRelease == "Investigation" == true, "investigation-needed")
                 .AddIf(workItem.Summary.Contains("[Performance]"), "perf")
                 .AddIf(workItem.Summary.Contains("[UX]"), "designer")
@@ -226,6 +272,7 @@ namespace CodePlex2GitHub
 
         public async Task MigrateMilestonesAsync()
         {
+            Console.WriteLine("Migrating milestones");
             var codePlexReleases =
                 _context.GetReleases().Where(p => p.Name != "Investigation")
                     .OrderBy(p => GetGitHubName(p.Name));
@@ -287,6 +334,7 @@ namespace CodePlex2GitHub
 
         public async Task MigrateRepoLabelsAsync()
         {
+            Console.WriteLine("Migrating labels");
             var current = (await _client.Issue.Labels.GetAllForRepository(_repoOwner, _repoName))
                 .ToDictionary(l => l.Name, l => l.Color);
 
@@ -311,7 +359,6 @@ namespace CodePlex2GitHub
                 {"cleanup", "bfdadc"},
                 {"blocked", "e11d21"},
                 {"working", "cccccc"},
-                {"low-impact", "fad8c7"},
                 {"high-impact", "f7c6c7"},
                 {"+200votes", "5319e7"},
                 {"+100votes", "5319e7"},
@@ -328,7 +375,11 @@ namespace CodePlex2GitHub
 
             foreach (var component in _context.GetWorkItemComponents())
             {
-                desired[GetGitHubName(component)] = "c7def8";
+                var labelName = GetGitHubName(component);
+                if (labelName != null)
+                {
+                    desired[labelName] = "c7def8";
+                }
             }
 
             foreach (var label in desired)

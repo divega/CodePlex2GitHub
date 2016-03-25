@@ -34,16 +34,26 @@ namespace CodePlex2GitHub
             optionsBuilder.UseSqlServer(_connectionString);
         }
 
-        public IQueryable<WorkItem> GetWorkItemAggregates()
+        public IQueryable<WorkItem> GetWorkItems()
         {
-            return ApplyTenantFilter(WorkItems
+            return ApplyTenantFilter(WorkItems)
                 .Include(i => i.AssignedTo)
                 .Include(i => i.ClosedBy)
                 .Include(i => i.ReportedBy)
                 .Include(i => i.LastUpdatedBy)
-                .Include(i => i.Comments).ThenInclude(c => c.User)
-                .Include(i => i.Attachments).ThenInclude(a => a.File.Content)
-                ).OrderBy(i => i.WorkItemId);
+                .OrderBy(i => i.WorkItemId);
+        }
+
+        public IQueryable<WorkItemComment> GetWorkItemComments()
+        {
+            return ApplyTenantFilter(WorkItemComments.Include(c => c.User))
+                ;
+        } 
+
+        public IQueryable<WorkItemAttachment> GetWorkItemAttachments()
+        {
+            return ApplyTenantFilter(WorkItemAttachments)
+                .Include(a => a.FileAttachment.Content);
         }
 
         public IQueryable<Thread> GetThreadAggregates()
@@ -95,6 +105,17 @@ namespace CodePlex2GitHub
                 .HasOne(f => f.Content)
                 .WithOne()
                 .HasForeignKey<FileAttachmentContent>(c => c.FileAttachmentId);
+
+            modelBuilder.Entity<WorkItemAttachment>()
+                .HasKey(nameof(WorkItemAttachment.WorkItemId), "FileAttachmentId");
+            
+
+            // Workaround: could be [ForeignKey("UserId")] but for https://github.com/aspnet/EntityFramework/issues/4909
+            // Could even go away but for https://github.com/aspnet/EntityFramework/issues/4884
+            modelBuilder.Entity<WorkItemComment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey("UserId");
         }
 
         private void AddTenantId<T>(EntityTypeBuilder<T> builder) where T : class

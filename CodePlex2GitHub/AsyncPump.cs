@@ -13,7 +13,7 @@ namespace Microsoft.Threading
         /// <param name="func">The asynchronous function to execute.</param>
         public static void Run(Func<Task> func)
         {
-            if (func == null) throw new ArgumentNullException("func");
+            if (func == null) throw new ArgumentNullException(nameof(func));
 
             var prevCtx = SynchronizationContext.Current;
             try
@@ -40,8 +40,10 @@ namespace Microsoft.Threading
             /// <summary>The queue of work items.</summary>
             private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue = 
                 new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
+/*
             /// <summary>The processing thread.</summary>
             private readonly Thread m_thread = Thread.CurrentThread;
+*/
 
             /// <summary>Dispatches an asynchronous message to the synchronization context.</summary>
             /// <param name="d">The System.Threading.SendOrPostCallback delegate to call.</param>

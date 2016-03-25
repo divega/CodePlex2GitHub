@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CodePlex2GitHub.Model;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations.Design;
 using Microsoft.Threading;
 
@@ -19,22 +12,33 @@ namespace CodePlex2GitHub
     {
         static void Main(string[] args)
         {
-            AsyncPump.Run(async delegate
+            /* regex test
+            var regex = new Regex(@"http://entityframework\.codeplex\.com/SourceControl/changeset/([0-9a-fA-F]+)$");
+
+            var input = @"http://entityframework.codeplex.com/SourceControl/changeset/4a2ea1a9eb1f";
+
+            var match = regex.Match(input);
+            if (match.Success)
             {
-                await MainAsync(args);
+                Console.WriteLine(match.Groups[0]);
+            }
+            */
 
-            });
-        }
 
-        static async Task MainAsync(string[] args)
-        {
             using (var context = new CodePlexDbContext(args[0], args[1], int.Parse(args[2])))
             {
-                DumpModelSnapshot(context);
+                //DumpModelSnapshot(context);
+
                 var gitHub = new GitHub(args[3], args[4], args[5], context);
-                await gitHub.MigrateRepoLabelsAsync();
-                await gitHub.MigrateMilestonesAsync();
-                await gitHub.MigrateAllIssuesAsync();
+
+                AsyncPump.Run(async delegate
+                {
+                    await gitHub.MigrateRepoLabelsAsync();
+                    await gitHub.MigrateMilestonesAsync();
+                    // TODO: Migrate team members (so we can set assignee)
+                    await gitHub.MigrateAllIssuesAsync();
+                    // TODO: Migrate discussion threads
+                });
             }
         }
 

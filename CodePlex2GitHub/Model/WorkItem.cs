@@ -15,7 +15,9 @@ namespace CodePlex2GitHub.Model
     {
         [Key]
         public int WorkItemId { get; set; }
+        [Required]
         public string Summary { get; set; }
+        [Required]
         public string Description { get; set; }
         public User ReportedBy { get; set; }
         public DateTime ReportedDate { get; set; }
@@ -23,14 +25,17 @@ namespace CodePlex2GitHub.Model
         public DateTime LastUpdatedDate { get; set; }
         public User AssignedTo { get; set; }
         public User ClosedBy { get; set; }
-        public DateTime ClosedDate { get; set; }
+        public DateTime? ClosedDate { get; set; }
+        public string ClosedComment { get; set; }
         public int VoteCount { get; set; } = 1;
         public string Status { get; set; }
         public string ReasonClosed { get; set; }
         public WorkItemSeverity Severity { get; set; }
         public string Type { get; set; }
         public string PlannedForRelease { get; set; }
+        [Required]
         public string Component { get; set; }
+        public string Custom { get; set; }
         public ICollection<WorkItemAttachment> Attachments { get; set; }
         public ICollection<WorkItemComment> Comments { get; set; }
         public static class WorkItemStatus
@@ -52,8 +57,8 @@ namespace CodePlex2GitHub.Model
         public static class WorkItemType
         {
             public static string Unassigned => nameof(Unassigned);
-            public static string Task => nameof(Feature);
-            public static string Issue => nameof(Feature);
+            public static string Task => nameof(Task);
+            public static string Issue => nameof(Issue);
             public static string Feature => nameof(Feature);
         }
     }

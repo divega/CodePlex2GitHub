@@ -104,13 +104,12 @@ namespace CodePlex2GitHub
 
             modelBuilder.Entity("CodePlex2GitHub.Model.User", b =>
                 {
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("Name");
 
                     b.HasKey("UserId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("User");
                 });
@@ -124,11 +123,17 @@ namespace CodePlex2GitHub
 
                     b.Property<int?>("ClosedByUserId");
 
-                    b.Property<DateTime>("ClosedDate");
+                    b.Property<string>("ClosedComment");
 
-                    b.Property<string>("Component");
+                    b.Property<DateTime?>("ClosedDate");
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Component")
+                        .IsRequired();
+
+                    b.Property<string>("Custom");
+
+                    b.Property<string>("Description")
+                        .IsRequired();
 
                     b.Property<int?>("LastUpdatedByUserId");
 
@@ -148,7 +153,8 @@ namespace CodePlex2GitHub
 
                     b.Property<string>("Status");
 
-                    b.Property<string>("Summary");
+                    b.Property<string>("Summary")
+                        .IsRequired();
 
                     b.Property<string>("Type");
 
@@ -171,11 +177,11 @@ namespace CodePlex2GitHub
                 {
                     b.Property<int>("WorkItemId");
 
-                    b.Property<int>("FileAttachmentId");
+                    b.Property<int?>("FileAttachmentId");
 
                     b.Property<int>("ProjectID");
 
-                    b.HasKey("WorkItemId");
+                    b.HasKey("WorkItemId", "FileAttachmentId");
 
                     b.HasIndex("FileAttachmentId");
 
@@ -195,9 +201,13 @@ namespace CodePlex2GitHub
 
                     b.Property<int>("ProjectID");
 
+                    b.Property<int>("UserId");
+
                     b.Property<int>("WorkItemId");
 
                     b.HasKey("CommentId");
+
+                    b.HasIndex("UserId");
 
                     b.HasIndex("WorkItemId");
 
@@ -217,14 +227,6 @@ namespace CodePlex2GitHub
                     b.HasOne("CodePlex2GitHub.Model.Thread")
                         .WithMany()
                         .HasForeignKey("ThreadThreadId");
-                });
-
-            modelBuilder.Entity("CodePlex2GitHub.Model.User", b =>
-                {
-                    b.HasOne("CodePlex2GitHub.Model.WorkItemComment")
-                        .WithOne()
-                        .HasForeignKey("CodePlex2GitHub.Model.User", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("CodePlex2GitHub.Model.WorkItem", b =>
@@ -261,6 +263,11 @@ namespace CodePlex2GitHub
 
             modelBuilder.Entity("CodePlex2GitHub.Model.WorkItemComment", b =>
                 {
+                    b.HasOne("CodePlex2GitHub.Model.User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("CodePlex2GitHub.Model.WorkItem")
                         .WithMany()
                         .HasForeignKey("WorkItemId")
